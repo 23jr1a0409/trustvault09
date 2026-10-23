@@ -3,13 +3,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TrustVault - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustVault Dashboard</title>
 </head>
 <body>
     <h1>TrustVault Dashboard</h1>
-    <h2>Welcome, {{ username }}!</h2>
-    <p>You are logged in successfully.</p>
-    <p>Document access features will be added next.</p>
-    <a href="{{ url_for('logout') }}">Logout</a>
+
+    <p>Welcome, {{ username }}!</p>
+
+    <h2>Upload Document</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('upload_document') }}"
+          method="POST"
+          enctype="multipart/form-data">
+
+        <label for="file">Select document (maximum 5 MB):</label>
+        <input
+            type="file"
+            id="file"
+            name="file"
+            accept=".pdf,.txt,.png,.jpg,.jpeg"
+            required
+        >
+
+        <button type="submit">Upload</button>
+    </form>
+
+    <hr>
+
+    <h2>My Documents</h2>
+
+    {% if documents %}
+        <ul>
+            {% for document in documents %}
+                <li>
+                    {{ document.original_filename }}
+                    -
+                    <a href="{{ url_for('download_document', document_id=document.id) }}">
+                        Download
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No documents uploaded yet.</p>
+    {% endif %}
+
+    <p>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </p>
 </body>
 </html>
