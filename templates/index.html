@@ -12,6 +12,7 @@
             text-align: center;
             padding: 80px 20px;
         }
+
         .container {
             max-width: 600px;
             margin: auto;
@@ -20,16 +21,35 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px #00000012;
         }
+
         h1 { color: #173b70; }
-        p { color: #555; }
+        p { color: #555; line-height: 1.6; }
+
+        .btn {
+            display: inline-block;
+            margin: 10px 6px;
+            padding: 12px 24px;
+            background: #173b70;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        .btn:hover {
+            background: #24569b;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>TrustVault</h1>
         <h2>Secure Document Access</h2>
+
         <p>Your documents. Your permissions. Your control.</p>
-        <p>Secure document sharing with access control and audit tracking.</p>
+        <p>Secure document access with user authentication.</p>
+
+        <a class="btn" href="{{ url_for('register') }}">Register</a>
+        <a class="btn" href="{{ url_for('login') }}">Login</a>
     </div>
 </body>
 </html>
