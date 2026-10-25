@@ -9,6 +9,10 @@
     <h1>TrustVault Dashboard</h1>
     <p>Welcome, {{ username }}!</p>
 
+    {% if current_user.role == "admin" %}
+        <p><a href="{{ url_for('admin_audit') }}">View Audit Logs</a></p>
+    {% endif %}
+
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}

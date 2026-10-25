@@ -1,5 +1,7 @@
 
 import os
+from functools import wraps
+from datetime import datetime
 import uuid
 
 from flask import (
@@ -165,6 +167,30 @@ def login():
     return render_template("login.html")
 
 
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=True)
+    action = db.Column(db.String(50), nullable=False)
+    details = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+def record_audit(action, document_id=None, details=None):
+    try:
+        entry = AuditLog(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            document_id=document_id,
+            action=action,
+            details=details
+        )
+        db.session.add(entry)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Audit logging failed")
+
+
 # Allowed document file types
 ALLOWED_EXTENSIONS = {"pdf", "txt", "png", "jpg", "jpeg"}
 
@@ -218,6 +244,7 @@ def upload_document():
 
         db.session.add(document)
         db.session.commit()
+        record_audit("upload", document.id, f"Uploaded {original_filename}")
 
     except Exception:
         db.session.rollback()
@@ -293,6 +320,7 @@ def share_document(document_id):
         ))
 
     db.session.commit()
+    record_audit("share", document.id, f"Shared with username: {username}; permission: {permission}")
     flash("Document access granted.")
     return redirect(url_for("dashboard"))
 
@@ -320,6 +348,7 @@ def revoke_document_access(document_id):
     if permission:
         db.session.delete(permission)
         db.session.commit()
+        record_audit("revoke", document.id, f"Revoked access for username: {username}")
         flash("Document access revoked.")
     else:
         flash("No sharing permission found for that user.")
@@ -347,12 +376,14 @@ def download_document(document_id):
         if permission is None or permission.permission not in {"read", "edit"}:
             abort(403)
 
-    return send_from_directory(
+    response = send_from_directory(
         app.config["UPLOAD_FOLDER"],
         document.filename,
         as_attachment=True,
         download_name=document.original_filename
     )
+    record_audit("download", document.id, f"Downloaded {document.original_filename}")
+    return response
 
 
 # User logout
@@ -362,6 +393,26 @@ def logout():
     logout_user()
     flash("You have logged out.")
     return redirect(url_for("home"))
+
+
+# Restrict audit logs to administrators
+def admin_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if current_user.role != "admin":
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+@app.route("/admin/audit")
+@admin_required
+def admin_audit():
+    logs = AuditLog.query.order_by(
+        AuditLog.created_at.desc()
+    ).limit(200).all()
+    return render_template("admin_audit.html", logs=logs)
 
 
 # Create database tables

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TrustVault - Audit Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        h1 { color: #243b55; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #243b55; color: white; }
+        tr:nth-child(even) { background: #f2f5f8; }
+        a { color: #175cd3; }
+    </style>
+</head>
+<body>
+    <h1>TrustVault Audit Logs</h1>
+    <p>Recent document and access activity (latest 200 records).</p>
+    <p><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time (UTC)</th>
+                    <th>User ID</th>
+                    <th>Document ID</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ log.user_id if log.user_id is not none else 'System' }}</td>
+                    <td>{{ log.document_id if log.document_id is not none else '-' }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.details or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No audit records found yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
