@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,10 +7,7 @@
 </head>
 <body>
     <h1>TrustVault Dashboard</h1>
-
     <p>Welcome, {{ username }}!</p>
-
-    <h2>Upload Document</h2>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -21,44 +17,63 @@
         {% endif %}
     {% endwith %}
 
+    <h2>Upload Document</h2>
     <form action="{{ url_for('upload_document') }}"
-          method="POST"
-          enctype="multipart/form-data">
-
+          method="POST" enctype="multipart/form-data">
         <label for="file">Select document (maximum 5 MB):</label>
-        <input
-            type="file"
-            id="file"
-            name="file"
-            accept=".pdf,.txt,.png,.jpg,.jpeg"
-            required
-        >
-
+        <input type="file" id="file" name="file"
+               accept=".pdf,.txt,.png,.jpg,.jpeg" required>
         <button type="submit">Upload</button>
     </form>
 
     <hr>
-
-    <h2>My Documents</h2>
+    <h2>My Documents and Shared Documents</h2>
 
     {% if documents %}
         <ul>
-            {% for document in documents %}
-                <li>
-                    {{ document.original_filename }}
-                    -
-                    <a href="{{ url_for('download_document', document_id=document.id) }}">
-                        Download
-                    </a>
-                </li>
-            {% endfor %}
+        {% for document in documents %}
+            <li>
+                <strong>{{ document.original_filename }}</strong>
+                {% if document.owner_id == current_user.id %}
+                    (Owner)
+                {% else %}
+                    (Shared with me)
+                {% endif %}
+
+                <a href="{{ url_for('download_document', document_id=document.id) }}">
+                    Download
+                </a>
+
+                {% if document.owner_id == current_user.id %}
+                    <h4>Share document</h4>
+                    <form action="{{ url_for('share_document', document_id=document.id) }}"
+                          method="POST">
+                        <label>Recipient username:</label>
+                        <input type="text" name="username" required>
+                        <label>Permission:</label>
+                        <select name="permission">
+                            <option value="read">Read</option>
+                            <option value="edit">Edit</option>
+                        </select>
+                        <button type="submit">Grant Access</button>
+                    </form>
+
+                    <h4>Revoke access</h4>
+                    <form action="{{ url_for('revoke_document_access', document_id=document.id) }}"
+                          method="POST">
+                        <label>Recipient username:</label>
+                        <input type="text" name="username" required>
+                        <button type="submit">Revoke Access</button>
+                    </form>
+                {% endif %}
+            </li>
+            <hr>
+        {% endfor %}
         </ul>
     {% else %}
-        <p>No documents uploaded yet.</p>
+        <p>No documents available yet.</p>
     {% endif %}
 
-    <p>
-        <a href="{{ url_for('logout') }}">Logout</a>
-    </p>
+    <p><a href="{{ url_for('logout') }}">Logout</a></p>
 </body>
 </html>

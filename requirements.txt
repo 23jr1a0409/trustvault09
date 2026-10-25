@@ -2,3 +2,4 @@ Flask
 Flask-SQLAlchemy
 Flask-Login
 gunicorn
+Flask-Limiter==3.5.0
